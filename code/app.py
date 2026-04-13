@@ -17,10 +17,10 @@ import gradio as gr
 load_dotenv()
 
 # Configuration
-DATA_PATH = "./data"
+DATA_PATH = "../data"
 DB_PATH = "./chroma_db"
 EMBEDDING_MODEL = "intfloat/multilingual-e5-small"
-LLM_MODEL = "mistral"
+LLM_MODEL = "phi3:mini" # model "mistral" is better but for storage purposes "phi3:mini" is used.
 
 # ============ INDEX DOCUMENTS ============
 
@@ -184,7 +184,7 @@ with gr.Blocks(title="DefScholar AI Assistant") as demo:
         with gr.Column(scale=1):
             gr.Markdown("""
             ### ℹ️ Info
-            - **LLM:** Mistral 7B (local)
+            - **LLM:** phi3:mini (local Ollama model)
             - **Embedding:** Multilingual E5
             - **Database:** ChromaDB
             
