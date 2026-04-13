@@ -1,3 +1,8 @@
+% ============================================
+% EXAMPLE FILE - This is a template / voorbeeld
+% Feel free to delete or replace this file
+% ============================================
+
 # Test Results DefScholar RAG
 
 ## Test 1: SMR Definition
