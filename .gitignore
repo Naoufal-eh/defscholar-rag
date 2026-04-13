@@ -1,25 +1,24 @@
-# Database (te groot voor GitHub)
+# Database
 chroma_db/
 
-# Python cache
+# Python
 __pycache__/
 *.pyc
 *.pyo
 
-# Virtuele omgeving
+# Virtual environment
 venv/
 env/
 .venv/
 
 # VS Code
 .vscode/
-*.code-workspace
 
-# Environment variables
+# Environment
 .env
 
-# Data (als je PDF's gevoelig of groot zijn)
-# data/
+# Data (je PDF's)
+data/
 
 # OS files
 .DS_Store
