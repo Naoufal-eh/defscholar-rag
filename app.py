@@ -1,6 +1,6 @@
 """
 DefScholar RAG Assistant
-Een lokale AI-assistent die vragen beantwoordt op basis van defensiedocumenten
+A local AI assistant that answers questions based on defense documents
 """
 
 import os
@@ -16,28 +16,28 @@ import gradio as gr
 
 load_dotenv()
 
-# Configuratie
+# Configuration
 DATA_PATH = "./data"
 DB_PATH = "./chroma_db"
 EMBEDDING_MODEL = "intfloat/multilingual-e5-small"
 LLM_MODEL = "mistral"
 
-# ============ DOCUMENTEN INDEXEREN ============
+# ============ INDEX DOCUMENTS ============
 
 def load_documents():
-    """Laad alle PDF's uit de data folder"""
+    """Load all PDFs from the data folder"""
     if not os.path.exists(DATA_PATH):
         os.makedirs(DATA_PATH)
-        print(f"📁 Map '{DATA_PATH}' aangemaakt. Plaats hier je PDF's.")
+        print(f"📁 Folder '{DATA_PATH}' created. Place your PDFs here.")
         return []
     
     loader = PyPDFDirectoryLoader(DATA_PATH)
     documents = loader.load()
-    print(f"✅ {len(documents)} documenten geladen")
+    print(f"✅ {len(documents)} documents loaded")
     return documents
 
 def split_documents(documents):
-    """Splits documenten in kleinere chunks"""
+    """Split documents into smaller chunks"""
     text_splitter = RecursiveCharacterTextSplitter(
         chunk_size=500,
         chunk_overlap=50,
@@ -45,11 +45,11 @@ def split_documents(documents):
         length_function=len
     )
     chunks = text_splitter.split_documents(documents)
-    print(f"✂️ {len(chunks)} chunks gemaakt")
+    print(f"✂️ {len(chunks)} chunks created")
     return chunks
 
 def create_vector_store(chunks):
-    """Maak een Chroma vector database"""
+    """Create a Chroma vector database"""
     embeddings = HuggingFaceEmbeddings(
         model_name=EMBEDDING_MODEL,
         model_kwargs={"device": "cpu"},
@@ -57,14 +57,14 @@ def create_vector_store(chunks):
     )
     
     if os.path.exists(DB_PATH):
-        print("📂 Bestaande vector database gevonden")
+        print("📂 Existing vector database found")
         vector_store = Chroma(
             persist_directory=DB_PATH,
             embedding_function=embeddings
         )
         vector_store.add_documents(chunks)
     else:
-        print("🆕 Nieuwe vector database wordt aangemaakt")
+        print("🆕 Creating new vector database")
         vector_store = Chroma.from_documents(
             documents=chunks,
             embedding=embeddings,
@@ -72,23 +72,23 @@ def create_vector_store(chunks):
         )
     
     vector_store.persist()
-    print("💾 Vector database opgeslagen")
+    print("💾 Vector database saved")
     return vector_store
 
 def setup_qa_chain(vector_store):
-    """Zet de RetrievalQA chain op"""
+    """Set up the RetrievalQA chain"""
     
-    prompt_template = """Je bent een AI-assistent voor Defensie (DefScholar).
-Beantwoord de vraag ALLEEN op basis van de onderstaande context.
-Als het antwoord niet in de context staat, zeg dan: "Ik kan dit niet vinden in de beschikbare documenten."
-Vermeld ALTIJD aan het einde van je antwoord welke bronnen je hebt gebruikt (met documentnaam).
+    prompt_template = """You are an AI assistant for Defence (DefScholar).
+Answer the question ONLY based on the context below.
+If the answer is not in the context, say: "I cannot find this in the available documents."
+ALWAYS mention at the end which sources you used (with document name).
 
 Context:
 {context}
 
-Vraag: {question}
+Question: {question}
 
-Antwoord (met bronvermelding):"""
+Answer (with source attribution):"""
 
     PROMPT = PromptTemplate(
         template=prompt_template,
@@ -120,39 +120,39 @@ Antwoord (met bronvermelding):"""
 qa_chain = None
 
 def ask_question(question):
-    """Stel een vraag en krijg antwoord met bronnen"""
+    """Ask a question and get answer with sources"""
     global qa_chain
     
     if qa_chain is None:
-        return "⚠️ Indexeer eerst documenten met de knop hieronder."
+        return "⚠️ Please index documents first using the button below."
     
     result = qa_chain.invoke({"query": question})
-    antwoord = result["result"]
-    bronnen = result["source_documents"]
+    answer = result["result"]
+    sources = result["source_documents"]
     
-    bronnen_text = "\n\n---\n**📚 Bronnen:**\n"
-    for i, doc in enumerate(bronnen, 1):
-        bron = doc.metadata.get("source", "Onbekend")
+    sources_text = "\n\n---\n**📚 Sources:**\n"
+    for i, doc in enumerate(sources, 1):
+        source = doc.metadata.get("source", "Unknown")
         page = doc.metadata.get("page", "?")
-        bronnen_text += f"{i}. {bron} (pagina {page})\n"
+        sources_text += f"{i}. {source} (page {page})\n"
     
-    return antwoord + bronnen_text
+    return answer + sources_text
 
 def index_documents():
-    """Complete indexeer pipeline"""
+    """Complete indexing pipeline"""
     global qa_chain
-    print("🚀 Start indexeren...")
+    print("🚀 Starting indexing...")
     
     documents = load_documents()
     if not documents:
-        return "⚠️ Geen documenten gevonden in ./data map"
+        return "⚠️ No documents found in ./data folder"
     
     chunks = split_documents(documents)
     vector_store = create_vector_store(chunks)
     qa_chain = setup_qa_chain(vector_store)
     
-    print("✅ Indexeren compleet!")
-    return "✅ Indexeren compleet! Je kunt nu vragen stellen."
+    print("✅ Indexing complete!")
+    return "✅ Indexing complete! You can now ask questions."
 
 # ============ START ============
 
@@ -160,36 +160,36 @@ with gr.Blocks(title="DefScholar AI Assistant") as demo:
     gr.Markdown("""
     # 📚 DefScholar AI Research Assistant
     
-    Stel vragen over defensie-onderzoeksdocumenten. Het systeem geeft antwoord **met bronvermelding**.
-    **Alle data blijft lokaal - geen cloud.**
+    Ask questions about defense research documents. The system provides answers **with source attribution**.
+    **All data stays local - no cloud.**
     """)
     
     with gr.Row():
         with gr.Column(scale=2):
             question_input = gr.Textbox(
-                label="📝 Jouw vraag",
-                placeholder="Bijv: Wat zijn de belangrijkste eisen voor verkenningsdrones?",
+                label="📝 Your question",
+                placeholder="e.g., What are the main requirements for reconnaissance drones?",
                 lines=3
             )
             
             with gr.Row():
-                ask_btn = gr.Button("🔍 Stel vraag", variant="primary")
-                index_btn = gr.Button("📂 Herindexeer documenten", variant="secondary")
+                ask_btn = gr.Button("🔍 Ask question", variant="primary")
+                index_btn = gr.Button("📂 Reindex documents", variant="secondary")
             
             output_text = gr.Textbox(
-                label="💬 Antwoord",
+                label="💬 Answer",
                 lines=15
             )
         
         with gr.Column(scale=1):
             gr.Markdown("""
             ### ℹ️ Info
-            - **LLM:** Mistral 7B (lokaal)
+            - **LLM:** Mistral 7B (local)
             - **Embedding:** Multilingual E5
             - **Database:** ChromaDB
             
-            ### 📁 Documenten
-            Plaats PDF's in de `data/` map en klik op 'Herindexeer documenten'.
+            ### 📁 Documents
+            Place PDFs in the `data/` folder and click 'Reindex documents'.
             """)
     
     ask_btn.click(ask_question, inputs=question_input, outputs=output_text)
@@ -200,11 +200,10 @@ if __name__ == "__main__":
     ╔═══════════════════════════════════════════════════════════════╗
     ║           📚 DEFSCHOLAR RAG ASSISTANT                         ║
     ║                                                               ║
-    ║   1. Zorg dat Ollama draait: 'ollama serve' in aparte terminal║
-    ║   2. Plaats PDF's in de 'data' map                            ║
-    ║   3. Klik 'Herindexeer documenten' in de web interface        ║
+    ║   1. Make sure Ollama is running: 'ollama serve' in terminal  ║
+    ║   2. Place PDFs in the 'data' folder                          ║
+    ║   3. Click 'Reindex documents' in the web interface           ║
     ║                                                               ║
     ╚═══════════════════════════════════════════════════════════════╝
     """)
     demo.launch(server_name="127.0.0.1", server_port=7860)
-
